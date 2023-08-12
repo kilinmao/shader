@@ -1,3 +1,4 @@
+// external dependencies
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import * as dat from 'dat.gui';
@@ -9,336 +10,341 @@ import { Application, createWindow } from './lib/window';
 
 // helper lib, provides exercise dependent prewritten Code
 import * as helper from './helper';
-import ImageWidget from './imageWidget';
 
-import earthImg from './textures/earth.jpg';
-import lavaImg from './textures/lava.jpg';
-import lavaNormalsImg from './textures/lava_normals.jpg';
-import colorsImg from './textures/colors.jpg';
-import disturbImg from './textures/disturb.jpg';
-import checkerImg from './textures/checker.jpg';
-import terracottaImg from './textures/terracotta.jpg';
-import terracottaNormalsImg from './textures/terracotta_normals.jpg';
-import plasticImg from './textures/plastic.jpg';
-import plasticNormalsImg from './textures/plastic_normals.jpg';
-import woodCeilingImg from './textures/wood_ceiling.jpg';
-import woodCeilingNormalsImg from './textures/wood_ceiling_normals.jpg';
-import rockImg from './textures/rock.jpg';
-import rockNormalsImg from './textures/rock_normals.jpg';
-import indoorImg from './textures/indoor.jpg';
-import uniformNormalsImg from './textures/uniform_normals.jpg';
+// load shaders
+import ambientVertexShader from './shader/ambient.v.glsl';
+import ambientFragmentShader from './shader/ambient.f.glsl';
+import normalVertexShader from './shader/normal.v.glsl';
+import normalFragmentShader from './shader/normal.f.glsl';
+import toonVertexShader from './shader/toon.v.glsl';
+import toonFragmentShader from './shader/toon.f.glsl';
+import gouraudVertexShader from './shader/gouraud.v.glsl';
+import gouraudFragmentShader from './shader/gouraud.f.glsl';
+import phongVertexShader from './shader/phong.v.glsl';
+import phongFragmentShader from './shader/phong.f.glsl';
+import lambertVertexShader from './shader/lambert.v.glsl';
+import lambertFragmentShader from './shader/lambert.f.glsl';
+import blinnPhongVertexShader from './shader/blinnPhong.v.glsl';
+import blinnPhongFragmentShader from './shader/blinnPhong.f.glsl';
+import { Vector3 } from 'three';
 
-
-import envMappingVertexShader from './shaders/envMapping.v.glsl';
-import envMappingFragmentShader from './shaders/envMapping.f.glsl';
-import fixSphericalVertexShader from './shaders/fixSpherical.v.glsl';
-import fixSphericalFragmentShader from './shaders/fixSpherical.f.glsl';
-import normalmapVertexShader from './shaders/normalmap.v.glsl';
-import normalmapFragmentShader from './shaders/normalmap.f.glsl';
-import sphericalVertexShader from './shaders/spherical.v.glsl';
-import sphericalFragmentShader from './shaders/spherical.f.glsl';
-import uvVertexShader from './shaders/uv.v.glsl';
-import uvFragmentShader from './shaders/uv.f.glsl';
-
-
+// export var mesh: THREE.Mesh;
+var scene = new THREE.Scene();
+var a;
+var amColor = new THREE.Vector3(104 / 255, 13 / 255, 13 / 255);
+var amReflectance = 0.5;
+var diColor = new THREE.Vector3(204 / 255, 25 / 255, 25 / 255);
+var diReflectance = 1;
+var spColor = new THREE.Vector3(255 / 255, 255 / 255, 255 / 255);
+var spReflectance = 1;
+var mag = 128;
+// const light = new THREE.PointLight(0xff0000, 1, 100);
+var light:THREE.Mesh;
 
 
-var mesh =  new THREE.Mesh();
-mesh.geometry = createQuad();
-var wid1:any;
-var drawingCanvas:HTMLCanvasElement;
-var scene:THREE.Scene;
-var env:boolean;
 
-
-const earth = new THREE.TextureLoader().load('textures/earth.jpg');
-const lava = new THREE.TextureLoader().load(lavaImg);
-const lavaNormals = new THREE.TextureLoader().load(lavaNormalsImg);
-const colors = new THREE.TextureLoader().load(colorsImg);
-const disturb = new THREE.TextureLoader().load(disturbImg);
-const checker = new THREE.TextureLoader().load(checkerImg);
-const terracotta = new THREE.TextureLoader().load(terracottaImg);
-const terracottaNormals = new THREE.TextureLoader().load(terracottaNormalsImg);
-const plastic = new THREE.TextureLoader().load(plasticImg);
-const plasticNormals = new THREE.TextureLoader().load(plasticNormalsImg);
-const woodCeiling = new THREE.TextureLoader().load(woodCeilingImg);
-const woodCeilingNormals = new THREE.TextureLoader().load(woodCeilingNormalsImg);
-const rock = new THREE.TextureLoader().load(rockImg);
-const rockNormals = new THREE.TextureLoader().load(rockNormalsImg);
-const indoor = new THREE.TextureLoader().load(indoorImg);
-const uniformNormals = new THREE.TextureLoader().load(uniformNormalsImg);
-
-var myTexture = earth;
-var myVertexShader = uvVertexShader;
-var myFragmentShader = uvFragmentShader;
-var widTexture:THREE.CanvasTexture;
-var normalTexture = uniformNormals
-
-
-function createQuad(){
-
-  const geometry = new THREE.BufferGeometry();
-
-  const vertices = new Float32Array(
-  [ -1.0, -1.0, 0.0,
-    1.0, -1.0, 0.0,
-    1.0, 1.0, 0.0,
-
-    1.0, 1.0, 0.0,
-    -1.0, 1.0, 0.0,
-    -1.0, -1.0, 0.0
-  ]
-  )
-
-  const normals = new Float32Array(
-    [0.0, 0.0, 1.0,
-      0.0, 0.0, 1.0,
-      0.0, 0.0, 1.0,
-      0.0, 0.0, 1.0,
-      0.0, 0.0, 1.0,
-      0.0, 0.0, 1.0,
-    ]
-    )
-  const uv = new Float32Array(
-    [0.0, 0.0,
-      1.0, 0.0,
-      1.0, 1.0,
-      1.0, 1.0,
-      0.0, 1.0,
-      0.0, 0.0,
-    ]
-    )
-
-    geometry.setAttribute( 'position', new THREE.Float32BufferAttribute( vertices, 3 ) );
-    geometry.setAttribute( 'normal', new THREE.Float32BufferAttribute( normals, 3 ) );
-    geometry.setAttribute( 'uv', new THREE.Float32BufferAttribute( uv, 2 ) );
-    return geometry;
-
-}
-
-function makeMyMaterial() {
-  if (env) {
-    scene.background = myTexture;
-    scene.background.mapping = THREE.EquirectangularReflectionMapping;
-  } else {
-    scene.background = new THREE.Color(0x000000);
-  }
-      mesh.material = new THREE.ShaderMaterial({
+function makeAmbientMaterial() {
+  scene.traverse(function (child) {
+    if (child instanceof THREE.Mesh && child != light) {
+      child.material = new THREE.ShaderMaterial({
         uniforms: {
-          myTexture:{value: myTexture},
-          normalTexture:{value: normalTexture},
-          widTexture:{value: widTexture}
+          ambientColor: { value: amColor },
+          ambientReflectance: { value: amReflectance }
         },
-        vertexShader: myVertexShader,
-        fragmentShader: myFragmentShader
+        vertexShader: ambientVertexShader,
+        fragmentShader: ambientFragmentShader
+      });
+      child.material.needsUpdate = true;
+    }
   });
-  
+}
 
-      mesh.material.needsUpdate = true;
+function makeNormalMaterial() {
+  scene.traverse(function (child) {
+    if (child instanceof THREE.Mesh && child != light) {
+      child.material = new THREE.ShaderMaterial({
+        vertexShader: normalVertexShader,
+        fragmentShader: normalFragmentShader,
+      });
+      child.material.needsUpdate = true;
+    }
+  });
+}
+
+function makeToonMaterial() {
+  scene.traverse(function (child) {
+    if (child instanceof THREE.Mesh && child != light) {
+      child.material = new THREE.ShaderMaterial({
+        vertexShader: toonVertexShader,
+        fragmentShader: toonFragmentShader
+      });
+      child.material.needsUpdate = true;
+    }
+  });
+}
+
+function makeLambertMaterial() {
+  scene.traverse(function (child) {
+    if (child instanceof THREE.Mesh && child != light) {
+      child.material = new THREE.ShaderMaterial({
+        uniforms: {
+          ambientColor: { value: amColor },
+          ambientReflectance: { value: amReflectance },
+          diffColor: { value: diColor },
+          diffReflectance: { value: diReflectance },
+          lightPos: { value: new Vector3(light.position.x, light.position.y, light.position.z)},
+        },
+        vertexShader: lambertVertexShader,
+        fragmentShader: lambertFragmentShader
+      });
+      child.material.needsUpdate = true;
+    }
+  });
+}
+
+function makeGouraudMaterial() {
+  scene.traverse(function (child) {
+    if (child instanceof THREE.Mesh && child != light) {
+      child.material = new THREE.ShaderMaterial({
+        uniforms: {
+          ambientColor: { value: amColor },
+          ambientReflectance: { value: amReflectance },
+          diffColor: { value: diColor },
+          diffReflectance: { value: diReflectance },
+          specColor: { value: spColor },
+          specReflectance: { value: spReflectance },
+          shininess: { value: mag },
+          lightPos: { value: new Vector3(light.position.x, light.position.y, light.position.z)},
+        },
+        vertexShader: gouraudVertexShader,
+        fragmentShader: gouraudFragmentShader
+      });
+      child.material.needsUpdate = true;
+    }
+  });
+}
+
+function makePhongMaterial() {
+  scene.traverse(function (child) {
+    if (child instanceof THREE.Mesh && child != light) {
+      child.material = new THREE.ShaderMaterial({
+        uniforms: {
+          ambientColor: { value: amColor },
+          ambientReflectance: { value: amReflectance },
+          diffColor: { value: diColor },
+          diffReflectance: { value: diReflectance },
+          specColor: { value: spColor },
+          specReflectance: { value: spReflectance },
+          shininess: { value: mag },
+          lightPos: { value: new Vector3(light.position.x, light.position.y, light.position.z) }
+        },
+        vertexShader: phongVertexShader,
+        fragmentShader: phongFragmentShader
+      });
+      child.material.needsUpdate = true;
+    }
+  });
+}
+
+function makeBlinnPhongMaterial() {
+  scene.traverse(function (child) {
+    if (child instanceof THREE.Mesh && child != light) {
+      child.material = new THREE.ShaderMaterial({
+        uniforms: {
+          ambientColor: { value: amColor },
+          ambientReflectance: { value: amReflectance },
+          diffColor: { value: diColor },
+          diffReflectance: { value: diReflectance },
+          specColor: { value: spColor },
+          specReflectance: { value: spReflectance },
+          shininess: { value: mag },
+          lightPos: { value: new Vector3(light.position.x, light.position.y, light.position.z) }
+        },
+        vertexShader: blinnPhongVertexShader,
+        fragmentShader: blinnPhongFragmentShader
+      });
+      child.material.needsUpdate = true;
+    }
+  });
+}
+function switchMaterial(){
+switch (materialName) {
+  case 'ambient':
+    makeAmbientMaterial();
+    break;
+  case 'normal':
+    makeNormalMaterial();
+    break;
+  case 'toon':
+    makeToonMaterial();
+    break;
+  case 'lambert':
+    makeLambertMaterial();
+    break;
+  case 'gouraud_phong':
+    makeGouraudMaterial();
+    break;
+  case 'phong_phong':
+    makePhongMaterial();
+    break;
+  case 'phong_blinnPhong':
+    makeBlinnPhongMaterial();
+    break;
+  default:
+    break;
+}
 }
 
 
+// enum(s)
+enum Shaders {
+  ambient = "Ambient",
+  normal = "Normal",
+  toon = "Toon",
+  lambert = "Lambert",
+  gouraud_phong = "Gouraud",
+  phong_phong = "Phong",
+  phong_blinnPhong = "Blinn-Phong",
+}
 
-
-enum Geometries { quad = "Quad", box = "Box", sphere = "Sphere", knot = "Knot", bunny = "Bunny" }
-enum Textures { earth = "Earth", colors = "Colors", disturb = "Disturb", checker = "Checker", terracotta = "Terracotta", plastic = "Plastic", wood_ceiling = "Wood", lava = "Lava", rock = "Rock", indoor = "Enviroment" }
-enum NormalMaps { uniform_normals = "Uniform", terracotta_normals = "Terracotta", plastic_normals = "Plastic", wood_ceiling_normals = "Wood", lava_normals = "Lava", rock_normals = "Rock" }
-enum Shaders { uv = "UV attribute", spherical = "Spherical", fixSpherical = "Spherical (fixed)", envMapping = "Environment Mapping", normalmap = "Normal Map" }
-
-
+// (default) Settings.
 class Settings extends utils.Callbackable {
-  texture: Textures = Textures.earth;
-  geometry: Geometries = Geometries.quad;
-  shader: Shaders = Shaders.uv;
-  pen: () => void = () => { };
-  enviroment: boolean = false;
-  normalmap: NormalMaps = NormalMaps.uniform_normals;
+  // different setting types are possible (e.g. string, enum, number, boolean)
+  shader: Shaders = Shaders.ambient
+  ambient_reflectance: number = 0.5;
+  ambient_color: [number, number, number] = [104, 13, 13];
+  diffuse_reflectance: number = 1;
+  diffuse_color: [number, number, number] = [204, 25, 25];
+  specular_reflectance: number = 1;
+  specular_color: [number, number, number] = [255, 255, 255];
+  magnitude: number = 128;
+  lightX: number = 2;
+  lightY: number = 2;
+  lightZ: number = 2;
 }
-
+var materialName: string;
+// create GUI given a Settings object
 function createGUI(params: Settings): dat.GUI {
+  // we are using dat.GUI (https://github.com/dataarts/dat.gui)
   var gui: dat.GUI = new dat.GUI();
 
-  gui.add(params, 'texture', utils.enumOptions(Textures)).name('Texture')
-  gui.add(params, 'geometry', utils.enumOptions(Geometries)).name('Geometry')
-  gui.add(params, 'shader', utils.enumOptions(Shaders)).name('Shader')
-  gui.add(params, 'normalmap', utils.enumOptions(NormalMaps)).name('Normal Map')
-  gui.add(params, "pen").name("Clear Drawing").listen().onChange(function (e) {
-    wid1.clearDrawing();
-    drawingCanvas = wid1.getDrawingCanvas()
-    widTexture = new THREE.CanvasTexture(drawingCanvas);
-    makeMyMaterial()
-  });
-  gui.add(params, "enviroment").name("Enviroment").listen().onChange(function (e) {
-    if (e) {
-      env = true;
-      makeMyMaterial()
-    } else {
-      env = false;    
-      makeMyMaterial()
-  };
-})
+  // build GUI
+  gui.add(params, 'shader', utils.enumOptions(Shaders)).name('Shader');
 
+
+  gui.add(params, 'ambient_reflectance', 0, 1, 0.01).name('Ambient reflec...').listen().onChange(function (e) {
+    amReflectance = e;
+    switchMaterial()
+  });
+  gui.addColor(params, 'ambient_color').name('Ambient color').listen().onChange(function (e) {
+    amColor = new THREE.Vector3(e[0] / 255, e[1] / 255, e[2] / 255);
+    switchMaterial()
+  });
+
+
+  gui.add(params, 'diffuse_reflectance', 0, 1, 0.01).name('Diffuse reflect...').listen().onChange(function (e) {
+    diReflectance = e;
+    switchMaterial()
+  });
+  gui.addColor(params, 'diffuse_color').name('Diffuse color').listen().onChange(function (e) {
+    diColor = new THREE.Vector3(e[0] / 255, e[1] / 255, e[2] / 255);
+    switchMaterial()
+  });
+
+  gui.add(params, 'specular_reflectance', 0, 1, 0.01).name('Specular reflec...').listen().onChange(function (e) {
+    spReflectance = e;
+    switchMaterial()
+  });
+  gui.addColor(params, 'specular_color').name('Specular color').listen().onChange(function (e) {
+    spColor = new THREE.Vector3(e[0] / 255, e[1] / 255, e[2] / 255);
+    switchMaterial()
+  });
+
+  gui.add(params, 'magnitude', 0, 128, 1).name('Magnitude').listen().onChange(function (e) {
+    mag = e;
+    switchMaterial()
+  });
+
+  var lightFolder = gui.addFolder("Light");
+  lightFolder.add(params, 'lightX', -10, 10, 0.5).name('X').listen().onChange(function (e) {
+    light.position.setX(e);
+    switchMaterial()
+  });
+  lightFolder.add(params, 'lightY', -10, 10, 0.5).name('Y').listen().onChange(function (e) {
+    light.position.setY(e);
+    switchMaterial()
+  });
+  lightFolder.add(params, 'lightZ', -10, 10, 0.5).name('Z').listen().onChange(function (e) {
+    light.position.setZ(e);
+    switchMaterial()
+  });
+  lightFolder.open();
   return gui;
 }
 
 
 
+
+
 function callback(changed: utils.KeyValuePair<Settings>) {
-
-  if (changed.key == "texture") {
-    switch (changed.value) {
-      case Textures.earth:
-        wid1.setImage(earthImg);
-        myTexture = earth;
-        makeMyMaterial()
-        break;
-      case Textures.colors:
-        wid1.setImage(colorsImg);
-        myTexture = colors;
-        makeMyMaterial()
-        break;
-      case Textures.disturb:
-        wid1.setImage(disturbImg);
-        myTexture = disturb
-        makeMyMaterial()
-        break;
-      case Textures.checker:
-        wid1.setImage(checkerImg);
-        myTexture = checker
-        makeMyMaterial()
-        break;
-      case Textures.terracotta:
-        wid1.setImage(terracottaImg);
-        myTexture = terracotta
-        makeMyMaterial()
-        break;
-      case Textures.plastic:
-        wid1.setImage(plasticImg);
-        myTexture = plastic
-        makeMyMaterial()
-        break;
-        case Textures.wood_ceiling:
-          wid1.setImage(woodCeilingImg);
-          myTexture = woodCeiling
-          makeMyMaterial()
-          break;
-      case Textures.lava:
-        wid1.setImage(lavaImg);
-        myTexture = lava;
-        makeMyMaterial()
-        break;
-      case Textures.rock:
-        wid1.setImage(rockImg);
-        myTexture = rock
-        makeMyMaterial()
-        break;
-      case Textures.indoor:
-        wid1.setImage(indoorImg);
-        myTexture = indoor
-        makeMyMaterial()
-        break;
-
-    }
-  }
-
-  if (changed.key == "geometry") {
-    switch (changed.value) {
-      case Geometries.box:
-        mesh.geometry = helper.createBox();
-        console.log(1)
-        break;
-      case Geometries.bunny:
-        mesh.geometry  = helper.createBunny();
-        break;
-      case Geometries.knot:
-        mesh.geometry = helper.createKnot();
-        break;
-      case Geometries.quad:
-        mesh.geometry = createQuad();
-        break;
-      case Geometries.sphere:
-        mesh.geometry = helper.createSphere();
-        break;
-
-    }
-  }
-
+  // only model change works for now:
   if (changed.key == "shader") {
     switch (changed.value) {
-      case Shaders.envMapping:
-        myVertexShader = envMappingVertexShader,
-        myFragmentShader = envMappingFragmentShader
-        makeMyMaterial()
+      case Shaders.ambient:
+        materialName = 'ambient';
+        makeAmbientMaterial();
         break;
-      case Shaders.fixSpherical:
-        myVertexShader = fixSphericalVertexShader,
-        myFragmentShader = fixSphericalFragmentShader
-        makeMyMaterial()
-        break;
-      case Shaders.normalmap:
-        myVertexShader = normalmapVertexShader,
-        myFragmentShader = normalmapFragmentShader
-        makeMyMaterial()
-        break;
-      case Shaders.spherical:
-        myVertexShader = sphericalVertexShader,
-        myFragmentShader = sphericalFragmentShader
-        makeMyMaterial()
-        console.log(2)
-        break;
-      case Shaders.uv:
-        myVertexShader = uvVertexShader,
-        myFragmentShader = uvFragmentShader
-        makeMyMaterial()
-        break;
-    }
-  }
 
-  if (changed.key == "normalmap") {
-    switch (changed.value) {
-      case NormalMaps.lava_normals:
-        normalTexture = lavaNormals
-        makeMyMaterial()
+      case Shaders.normal:
+        materialName = 'normal';
+        makeNormalMaterial();
         break;
-      case NormalMaps.plastic_normals:
-        normalTexture = plasticNormals
-        makeMyMaterial()
+
+      case Shaders.toon:
+        materialName = 'toon';
+        makeToonMaterial();
         break;
-      case NormalMaps.rock_normals:
-        normalTexture = rockNormals
-        makeMyMaterial()
+
+      case Shaders.lambert:
+        materialName = 'lambert';
+        makeLambertMaterial();
         break;
-      case NormalMaps.terracotta_normals:
-        normalTexture = terracottaNormals
-        makeMyMaterial()
+
+      case Shaders.gouraud_phong:
+        materialName = 'gouraud_phong';
+        makeGouraudMaterial();
         break;
-      case NormalMaps.uniform_normals:
-        normalTexture= uniformNormals
-        makeMyMaterial()
+
+      case Shaders.phong_phong:
+        materialName = 'phong_phong';
+        makePhongMaterial();
         break;
-      case NormalMaps.wood_ceiling_normals:
-        normalTexture = woodCeilingNormals
-        makeMyMaterial()
+
+      case Shaders.phong_blinnPhong:
+        materialName = 'phong_blinnPhong';
+        makeBlinnPhongMaterial();
         break;
     }
   }
 }
+  
+/*******************************************************************************
+ * Main entrypoint. Previouly declared functions get managed/called here.
+ * Start here with programming.
+ ******************************************************************************/
 
-
-
-function main(){
-
-    // setup/layout root Application.
+function main() {
+  // setup/layout root Application.
   // Its the body HTMLElement with some additional functions.
-  var root = Application("Texture");
+  var root = Application("Shader");
   // define the (complex) layout, that will be filled later:
   root.setLayout([
-    ["renderer1", "renderer2"],
+    ["renderer", "."],
     [".", "."]
   ]);
   // 1fr means 1 fraction, so 2fr 1fr means
   // the first column has 2/3 width and the second 1/3 width of the application
-  root.setLayoutColumns(["1fr", "1fr"]);
+  root.setLayoutColumns(["1fr", "0fr"]);
   // you can use percentages as well, but (100/3)% is difficult to realize without fr.
   root.setLayoutRows(["100%", "0%"]);
 
@@ -348,17 +354,15 @@ function main(){
   // create GUI using settings
   var gui = createGUI(settings);
   gui.open();
-  // adds the callback that gets called on settings change
-  settings.addCallback(callback);
+
+
 
   // ---------------------------------------------------------------------------
   // create window with given id
   // the root layout will ensure that the window is placed right
-  var renderer1Div = createWindow("renderer1");
-  var renderer2Div = createWindow("renderer2");
+  var rendererDiv = createWindow("renderer");
   // add it to the root application
-  root.appendChild(renderer1Div);
-  root.appendChild(renderer2Div);
+  root.appendChild(rendererDiv);
 
   // create renderer
   var renderer = new THREE.WebGLRenderer({
@@ -366,11 +370,18 @@ function main(){
   });
 
   // create scene
-  scene = new THREE.Scene();
-  scene.add(mesh);
 
   // user ./helper.ts for building the scene
 
+  a = helper.setupGeometry(scene);
+
+  var sphere = new THREE.SphereGeometry(0.2, 20, 20);
+  var material = new THREE.MeshBasicMaterial({ color: 0xFF8000 });
+  light = new THREE.Mesh(sphere, material);
+  scene.add(light);
+  light.position.setX(2);
+  light.position.setY(2);
+  light.position.setZ(2);
 
   // create camera
   var camera = new THREE.PerspectiveCamera();
@@ -378,39 +389,23 @@ function main(){
   helper.setupCamera(camera, scene);
 
   // create controls
-  var controls = new OrbitControls(camera, renderer2Div);
+  var controls = new OrbitControls(camera, rendererDiv);
   // user ./helper.ts for setting up the controls
   helper.setupControls(controls);
+
+  // adds the callback that gets called on settings change
+  settings.addCallback(callback);
+  callback({ key: "shader", value: Shaders.ambient });
 
   // fill the Window (renderDiv). In RenderWidget happens all the magic.
   // It handles resizes, adds the fps widget and most important defines the main animate loop.
   // You dont need to touch this, but if feel free to overwrite RenderWidget.animate
-  wid1 = new ImageWidget(renderer1Div);
-  var wid2 = new RenderWidget(renderer2Div, renderer, camera, scene, controls);
+  var wid = new RenderWidget(rendererDiv, renderer, camera, scene, controls);
   // start the draw loop (this call is async)
-  wid1.setImage(earthImg);
-  wid2.animate();
-  wid1.enableDrawing()
-  
-  mesh.material = new THREE.ShaderMaterial({
-    uniforms: {
-      myTexture: { value: myTexture },
-      widTexture: { value: widTexture }
-    },
-    vertexShader: myVertexShader,
-    fragmentShader: myFragmentShader
-  });
-
-
-  renderer1Div.addEventListener("mousemove", function() {
-    drawingCanvas = wid1.getDrawingCanvas()
-    widTexture = new THREE.CanvasTexture(drawingCanvas);
-    makeMyMaterial()
-  });
-  
+  wid.animate();
 }
-
-
 
 // call main entrypoint
 main();
+
+

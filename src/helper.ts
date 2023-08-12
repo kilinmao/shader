@@ -1,148 +1,117 @@
 import * as THREE from 'three';
 import type { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
-import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader.js';
 import * as dat from 'dat.gui';
 
 // local from us provided utilities
 import * as utils from './lib/utils';
-import bunny from './models/bunny.obj';
+
+// load shader
+import ambientVertexShader from './shader/ambient.v.glsl';
+import ambientFragmentShader from './shader/ambient.f.glsl';
+
+/*******************************************************************************
+ * Defines Settings and GUI will later be seperated into settings.ts
+ ******************************************************************************/
+
+// enum(s)
+export enum Shaders {
+  ambient = "Ambient",
+  normal = "Normal",
+  toon = "Toon",
+  lambert = "Lambert",
+  gouraud_phong = "Gouraud",
+  phong_phong = "Phong",
+  phong_blinnPhong = "Blinn-Phong",
+}
+
+// (default) Settings.
+export class Settings extends utils.Callbackable {
+  // different setting types are possible (e.g. string, enum, number, boolean)
+  shader: Shaders = Shaders.ambient
+  ambient_reflectance: number = 0.5;
+  ambient_color: [number, number, number] = [104, 13, 13];
+  diffuse_reflectance: number = 1;
+  diffuse_color: [number, number, number] = [204, 25, 25];
+  specular_reflectance: number = 1;
+  specular_color: [number, number, number] = [255, 255, 255];
+  magnitude: number = 128;
+  lightX: number = 2;
+  lightY: number = 2;
+  lightZ: number = 2;
+}
+
+// create GUI given a Settings object
+export function createGUI(params: Settings): dat.GUI {
+  // we are using dat.GUI (https://github.com/dataarts/dat.gui)
+  var gui: dat.GUI = new dat.GUI();
+
+  // build GUI
+  gui.add(params, 'shader', utils.enumOptions(Shaders)).name('Shader');
+
+  gui.add(params, 'ambient_reflectance', 0, 1, 0.01).name('Ambient reflec...');
+  gui.addColor(params, 'ambient_color').name('Ambient color');
+
+  gui.add(params, 'diffuse_reflectance', 0, 1, 0.01).name('Diffuse reflect...');
+  gui.addColor(params, 'diffuse_color').name('Diffuse color');
+
+  gui.add(params, 'specular_reflectance', 0, 1, 0.01).name('Specular reflec...');
+  gui.addColor(params, 'specular_color').name('Specular color');
+
+  gui.add(params, 'magnitude', 0, 128, 1).name('Magnitude');
+
+  var lightFolder = gui.addFolder("Light");
+  lightFolder.add(params, 'lightX', -10, 10, 0.5).name('X');
+  lightFolder.add(params, 'lightY', -10, 10, 0.5).name('Y');
+  lightFolder.add(params, 'lightZ', -10, 10, 0.5).name('Z');
+  lightFolder.open();
+
+  return gui;
+}
 
 /*******************************************************************************
  * helper functions to build scene (geometry, light), camera and controls.
  ******************************************************************************/
 
-// enum(s)
-export enum Geometries { quad = "Quad", box = "Box", sphere = "Sphere", knot = "Knot", bunny = "Bunny" }
-export enum Textures { earth = "Earth", colors = "Colors", disturb = "Disturb", checker = "Checker", terracotta = "Terracotta", plastic = "Plastic", wood_ceiling = "Wood", lava = "Lava", rock = "Rock", indoor = "Enviroment" }
-export enum NormalMaps { uniform_normals = "Uniform", terracotta_normals = "Terracotta", plastic_normals = "Plastic", wood_ceiling_normals = "Wood", lava_normals = "Lava", rock_normals = "Rock" }
-export enum Shaders { uv = "UV attribute", spherical = "Spherical", fixSpherical = "Spherical (fixed)", envMapping = "Environment Mapping", normalmap = "Normal Map" }
+export function setupGeometry(scene: THREE.Scene) {
+  // https://threejs.org/docs/#api/en/geometries/BoxGeometry
+  var torusKnotGeo = new THREE.TorusKnotGeometry(1, 0.3, 100, 32)
+  var sphereGeo1 = new THREE.SphereGeometry(1.4, 20, 20);
+  var boxGeo = new THREE.BoxGeometry(2, 2, 2);
+  var sphereGeo2 = new THREE.SphereGeometry(1.4, 20, 20);
+  var material = new THREE.ShaderMaterial({
+    vertexShader: ambientVertexShader,
+    fragmentShader: ambientFragmentShader
+  });
+  var model0 = new THREE.Mesh(torusKnotGeo, material);
+  scene.add(model0);
+  sphereGeo1.scale(1, 0.5, 1);
+  var model1 = new THREE.Mesh(sphereGeo1, material);
+  model1.rotateX(3.141592 / 2);
+  model1.translateX(-4);
+  model1.translateZ(-1.5);
+  scene.add(model1);
 
+  var model2 = new THREE.Mesh(sphereGeo2, material);
+  model2.scale.set(1, 0.5, 1);
+  model2.rotateX(3.141592 / 2);
+  model2.translateX(-4);
+  model2.translateZ(1.5);
+  scene.add(model2);
 
-export class Settings extends utils.Callbackable {
-  texture: Textures = Textures.earth;
-  geometry: Geometries = Geometries.quad;
-  shader: Shaders = Shaders.uv;
-  pen: () => void = () => { };
-  enviroment: boolean = false;
-  normalmap: NormalMaps = NormalMaps.uniform_normals;
-}
+  var model3 = new THREE.Mesh(boxGeo, material);
+  model3.translateX(4);
+  scene.add(model3);
 
-export function createGUI(params: Settings): dat.GUI {
-  var gui: dat.GUI = new dat.GUI();
-
-  gui.add(params, 'texture', utils.enumOptions(Textures)).name('Texture')
-  gui.add(params, 'geometry', utils.enumOptions(Geometries)).name('Geometry')
-  gui.add(params, 'shader', utils.enumOptions(Shaders)).name('Shader')
-  gui.add(params, 'normalmap', utils.enumOptions(NormalMaps)).name('Normal Map')
-  gui.add(params, "pen").name("Clear Drawing")
-  gui.add(params, "enviroment").name("Enviroment")
-
-  return gui;
-}
-
-export function createBunny() {
-  const loader = new OBJLoader();
-  var geometry = new THREE.BufferGeometry();
-  var mesh = loader.parse(bunny).children[0];
-  if (mesh instanceof THREE.Mesh) {
-    geometry = mesh.geometry as THREE.BufferGeometry;
-  }
-  geometry.setIndex([...Array(geometry.attributes.position.count).keys()]);
-  return geometry;
-}
-
-export function createBox() {
-  var geometry = new THREE.BoxGeometry(1, 1, 1);
-  return geometry;
-}
-
-export function createSphere() {
-  var geometry = new THREE.SphereGeometry(0.6, 30, 30);
-  return geometry;
-}
-
-export function createKnot() {
-  var geometry = new THREE.TorusKnotGeometry(0.4, 0.1, 100, 32);
-  return geometry;
-}
-
-// export function createQuad() {
-//   // var geometry = new THREE.PlaneBufferGeometry(2, 2);
-//   const geometry = new THREE.BufferGeometry();
-
-//   const indices = [];
-
-//   const vertices = [];
-//   const normals = [];
-//   const colors = [];
-//   const uv = [];
-
-//   const size = 2;
-//   const segments = 100;
-
-//   const halfSize = size / 2;
-//   const segmentSize = size / segments;
-
-//   for ( let i = 0; i <= segments; i ++ ) {
-
-//     const y = ( i * segmentSize ) - halfSize;
-
-//     for ( let j = 0; j <= segments; j ++ ) {
-
-//       const x = ( j * segmentSize ) - halfSize;
-
-//       vertices.push( x, - y, 0 );
-//       normals.push( 0, 0, 1 );
-//       uv.push(j * segmentSize/2, (segments - i) * segmentSize/2);
-
-//       const r = ( x / size ) + 0.5;
-//       const g = ( y / size ) + 0.5;
-
-//       colors.push( r, g, 1 );
-
-//     }
-
-//   }
-
-//   // generate indices (data for element array buffer)
-
-//   for ( let i = 0; i < segments; i ++ ) {
-
-//     for ( let j = 0; j < segments; j ++ ) {
-
-//       const a = i * ( segments + 1 ) + ( j + 1 );
-//       const b = i * ( segments + 1 ) + j;
-//       const c = ( i + 1 ) * ( segments + 1 ) + j;
-//       const d = ( i + 1 ) * ( segments + 1 ) + ( j + 1 );
-
-//       // generate two faces (triangles) per iteration
-
-//       indices.push( a, b, d ); // face one
-//       indices.push( b, c, d ); // face two
-
-//     }
-
-//   }
-
-//   //
-
-//   geometry.setIndex( indices );
-//   geometry.setAttribute( 'position', new THREE.Float32BufferAttribute( vertices, 3 ) );
-//   geometry.setAttribute( 'normal', new THREE.Float32BufferAttribute( normals, 3 ) );
-//   geometry.setAttribute( 'color', new THREE.Float32BufferAttribute( colors, 3 ) );
-//   geometry.setAttribute( 'uv', new THREE.Float32BufferAttribute( uv, 2 ) );
-//   return geometry;
-// }
-
-
+  return { material, model0, model1, model2, model3 };
+};
 
 // define camera that looks into scene
 export function setupCamera(camera: THREE.PerspectiveCamera, scene: THREE.Scene) {
   // https://threejs.org/docs/#api/cameras/PerspectiveCamera
   camera.near = 0.01;
-  camera.far = 1000;
+  camera.far = 20;
   camera.fov = 70;
-  camera.position.z = 2;
+  camera.position.z = 6;
   camera.lookAt(scene.position);
   camera.updateProjectionMatrix()
   return camera
@@ -150,7 +119,6 @@ export function setupCamera(camera: THREE.PerspectiveCamera, scene: THREE.Scene)
 
 // define controls (mouse interaction with the renderer)
 export function setupControls(controls: OrbitControls) {
-  // https://threejs.org/docs/#examples/en/controls/OrbitControls
   controls.rotateSpeed = 1.0;
   controls.zoomSpeed = 1.2;
   controls.enableZoom = true;
@@ -159,3 +127,5 @@ export function setupControls(controls: OrbitControls) {
   controls.maxDistance = 9;
   return controls;
 };
+
+

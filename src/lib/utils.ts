@@ -33,7 +33,7 @@ export type KeyValuePair<T> = { [N in keyof T]: { key: N, value: T[N] } }[keyof 
  * Some Typescript enum "exploit" to get the names of all enum options.
  * @param myEnum  Name of an enum
  */
-export function enumOptions<T>(myEnum: Record<string, T>): Array<string> {
+export function enumOptions<T>(myEnum: T): Array<string> {
   let res: string[] = [];
   Object.keys(myEnum).forEach(k => {
     if (typeof (myEnum as any)[k]  === 'string')
@@ -49,7 +49,7 @@ export function enumOptions<T>(myEnum: Record<string, T>): Array<string> {
  * Some Typescript enum "exploit" to get the keys of all enum options.
  * @param myEnum  Name of an enum
  */
-export function enumKeys<T>(myEnum: Record<string, T>): Array<string> {
+export function enumKeys<T>(myEnum: T): Array<string> {
   let res: string[] = [];
   Object.keys(myEnum).forEach(k => {
     if (typeof (myEnum as any)[k]  === 'string')
@@ -61,11 +61,9 @@ export function enumKeys<T>(myEnum: Record<string, T>): Array<string> {
   return res
 }
 
-
-
-export function objectFlip<T>(myEnum: Record<string, T>): {[key: string]: string } {
+export function objectFlip<T>(myEnum: T): Object {
   return Object.keys(myEnum).reduce((ret, key) => {
-    (ret as any)[String((myEnum as any)[key])] = key;
+    (ret as any)[(myEnum as any)[key]] = key;
     return ret;
   }, {});
 }
