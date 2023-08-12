@@ -1,5 +1,5 @@
 {
-    "name": "ray-tracing",
+    "name": "texture",
     "version": "3.0.0",
     "description": "A starter project for using React, TypeScript, SCSS and Webpack",
     "main": "index.js",

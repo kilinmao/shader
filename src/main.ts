@@ -330,7 +330,7 @@ function main(){
 
     // setup/layout root Application.
   // Its the body HTMLElement with some additional functions.
-  var root = Application("Basic");
+  var root = Application("Texture");
   // define the (complex) layout, that will be filled later:
   root.setLayout([
     ["renderer1", "renderer2"],
