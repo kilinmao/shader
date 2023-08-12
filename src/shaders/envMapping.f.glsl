@@ -1,13 +1,8 @@
-// #version 300 es
-
 precision mediump float;
 
 // Interpolated values from the vertex shaders
 in vec3 v_position;
 in vec3 v_normal;
-
-// Ouput data
-// out vec3 color;
 
 // Values that stay constant for the whole mesh.
 uniform sampler2D myTexture;

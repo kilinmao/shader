@@ -1,17 +1,8 @@
-// #version 300 es
-// in vec3 position;
-// in vec3 normal;
-// in vec2 uv;
-
 out vec2 UV;
 out vec3 v_fragPos;
 out vec3 v_normal;
 out vec3 v_lightPos;
 
-// uniform mat4 modelViewMatrix;
-// uniform mat4 projectionMatrix;
-// uniform mat4 viewMatrix;
-// uniform mat3 normalMatrix;
 
 void main()
 {

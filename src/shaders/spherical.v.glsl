@@ -1,11 +1,5 @@
-// #version 300 es 
-
 precision mediump float;
 
-// uniform mat4 modelViewMatrix;
-// uniform mat4 projectionMatrix;
-
-// in vec3 position;  
 
 out vec2 UV;
 

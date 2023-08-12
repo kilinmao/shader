@@ -1,5 +1,3 @@
-// #version 300 es
-
 precision mediump float;
 
 uniform sampler2D myTexture;
@@ -9,10 +7,6 @@ uniform sampler2D normalTexture;
 in vec3 v_fragPos;
 in vec3 v_lightPos;
 in vec2 UV;
-
-// out vec4 fragColor;
-
-
 
 void main()
 {
