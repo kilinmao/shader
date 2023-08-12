@@ -1,34 +1,56 @@
-# Texture Mapping with Three.js
+# Custom Shader Materials with Three.js
 
-This demo showcases texture mapping using WebGL and Three.js. It provides various shaders, geometries, and textures to experiment with different combinations. Users are also able to paint their custom texture and observe real-time changes in the 3D texture. Additionally, you can view the 🌟 [demo](https://kilinmao.github.io/texture). 🌟 
+This is an example project showcasing the implementation of custom shader materials with Three.js. It demonstrates using different shaders to render a 3D scene and allows users to switch between various shading techniques with real-time results. Additionally, you can view the 🌟 [demo](https://kilinmao.github.io/shader). 🌟 
 
 ## Features
-* Multiple shaders such as UV attribute, Spherical, Fixed Spherical, Environment Mapping, and Normal Mapping
-* Different geometries: Quad, Box, Sphere, Knot, and Bunny
-* Various textures, including Earth, Colors, Disturb, Checker, Terracotta, Plastic, Wood, Lava, Rock, and Indoor
-* Option to enable environment mapping
-* Selection of normal maps
-* A custom drawing panel for creating your own textures in the canvas
-* Orbit camera controls for easy navigation in 3D space
+
+* Custom GLSL shaders integrated with Three.js
+* Shader materials include:
+  * Ambient shading
+  * Normal shading
+  * Toon shading
+  * Lambert shading
+  * Gouraud shading with Phong specular
+  * Phong shading with Phong specular
+  * Phong shading with Blinn-Phong specular
+* Adjustable light position
+* Adjustable material properties such as ambient, diffuse, and specular reflectance, as well as shininess
+* Interactive controls using dat.GUI
+* Orbit camera controls for easy scene navigation
 
 ## Usage
-1. Run the demo and use the dat.GUI interface to select and experiment with different combinations of shaders, geometries, and textures.
-2. You can enable environment mapping to enhance the realism of the textures.
-3. Select a normal map to add fine details to the texture surface.
-4. Paint custom textures using the drawing panel in the left pane. The texture painting process is interactive and updates instantly on the 3D geometry.
-5. Use orbit controls to navigate the 3D scene and inspect the textures up close.
+
+1. Set up your 3D scene using the helper functions in the `helper.ts` file or create your own components.
+2. Adjust the shader material on the objects in the scene by selecting the desired shader from the dropdown menu.
+3. Modify the material properties and light position using the dat.GUI controls to see real-time changes in the rendering.
+4. Use OrbitControls to navigate around the scene and observe the shading from different viewpoints.
 
 ## Main Functionality
-The demo sets up a scene with a mesh, initializes a renderer, and provides an orbit camera. Users can manipulate shader materials, geometry, and textures through the settings to experiment with different texture mapping techniques. The demo also allows users to paint custom textures which can be instantly rendered on the 3D geometry.
+
+The primary functionalities for setting up the custom shaders and materials can be found in the `main.ts` file. The various shader materials are created using the Three.js `ShaderMaterial` class, and their properties are controlled by the user-defined settings. Upon changing the shader settings, the scene is updated to reflect the changes, allowing real-time comparisons between different shading techniques.
 
 ## Libs & Helpers
+
 The project uses the following libraries and helper functions:
 
-* Three.js for rendering 3D shapes and textures using WebGL.
-* OrbitControls for smooth camera navigation with mouse or touch support.
-* dat.GUI for providing an intuitive user interface to manipulate shaders, geometry, and textures.
-* ImageWidget for drawing custom textures and enabling texture painting on the canvas.
+* Three.js for WebGL rendering and 3D scene setup
+* dat.GUI for controlling settings and adjustments
+* OrbitControls for camera navigation
+* Utility functions for window and application handling in `./lib/utils.ts`
+* Helper functions for geometry setup, camera positioning, and controls in `./helper.ts`
 
-### Helper files
-- `helper.ts`: Set up a camera, controls, and various geometry shapes.
-- `settings.ts`: Handles all settings changes, such as textures, geometries, and shaders.
+## Shaders
+
+The custom GLSL shaders are loaded using webpack and can be found in the `./shader` directory. Each shader is broken down into a vertex and fragment shader file, with corresponding `.v.glsl` and `.f.glsl` file extensions.
+
+The shaders include:
+
+* `ambient`: Basic ambient shading
+* `normal`: Displays normal vectors as RGB colors
+* `toon`: Simple toon/cel shading
+* `lambert`: Lambertian diffuse shading
+* `gouraud`: Gouraud shading with Phong specular highlights
+* `phong`: Phong shading with Phong specular highlights
+* `blinnPhong`: Phong shading with Blinn-Phong specular highlights
+
+To add new shader materials, simply create a new vertex and fragment shader file in the `./shader` directory and integrate them into the `main.ts` file following the same pattern as the other shader materials. Update the `Shaders` enum and the shader switch cases accordingly to handle the new shading material.
