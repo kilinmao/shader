@@ -41,10 +41,12 @@ module.exports = (env, options) =>
                     type: "javascript/auto",
                     loader: "file-loader",
                     options: {
-                        publicPath: "../",
+                        publicPath: "",
                         name: "[path][name].[ext]",
-                        context: path.resolve(__dirname, "src/assets"),
-                        emitFile: false,
+                        context: path.resolve(__dirname, "src/textures"),
+                        emitFile: true,
+                        outputPath: "textures/",
+                        esModule: false,
                     },
                 },
                 {
@@ -59,6 +61,14 @@ module.exports = (env, options) =>
                         emitFile: false,
                     },
                 },
+                                      {
+                    test: /\.obj$/,
+                    loader: 'raw-loader',
+                    },
+                            {
+                    test: /\.(vert|frag|f|v|glsl)$/,
+                    loader: 'shader-loader',
+                    },
             ],
         },
         resolve: { extensions: [".tsx", ".ts", ".js"] },
